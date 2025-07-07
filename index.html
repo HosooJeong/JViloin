@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제이바이올린교습소</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles-extended.css">
+    <link rel="stylesheet" href="css/musical-theme.css">
+</head>
+<body>
+    <header></header>
+
+    <main>
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <h2>제이바이올린에 오신 것을 환영합니다</h2>
+                <p>전문적인 바이올린 교육으로 여러분의 음악 여행을 시작하세요</p>
+                <button class="cta-button">수업 문의하기</button>
+            </div>
+        </section>
+
+        <section id="about" class="about">
+            <div class="container">
+                <h2>학원 소개</h2>
+                <p>제이바이올린은 체계적이고 전문적인 바이올린 교육을 제공합니다.<br>
+                클래식의 전통과 현대적 교육방법이 조화된 특별한 음악 교육을 경험하세요.</p>
+            </div>
+        </section>
+
+        <section id="courses" class="courses">
+            <div class="container">
+                <h2>수업 과정</h2>
+                <div class="course-grid">
+                    <div class="course-card">
+                        <h3>초급 과정</h3>
+                        <p>바이올린을 처음 접하는 분들을 위한 기초 과정<br>
+                        <small>• 기본 자세 및 보잉 • 음계 연습 • 쉬운 동요</small></p>
+                    </div>
+                    <div class="course-card">
+                        <h3>중급 과정</h3>
+                        <p>기초를 익힌 후 더 깊이 있는 연주를 배우는 과정<br>
+                        <small>• 다양한 보잉 기법 • 클래식 소품 • 표현력 향상</small></p>
+                    </div>
+                    <div class="course-card">
+                        <h3>고급 과정</h3>
+                        <p>전문적인 연주 실력을 키우는 심화 과정<br>
+                        <small>• 고급 테크닉 • 협주곡 • 콩쿠르 준비</small></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="teachers" class="teachers">
+            <div class="container">
+                <h2>강사진</h2>
+                <div class="teacher-grid">
+                    <div class="teacher-card">
+                        <h3>김선생님</h3>
+                        <p>클래식 바이올린 전공, 15년 경력<br>
+                        <small>서울대 음대 졸업 • KBS교향악단 출신</small></p>
+                    </div>
+                    <div class="teacher-card">
+                        <h3>이선생님</h3>
+                        <p>실용 바이올린 전공, 10년 경력<br>
+                        <small>berklee 음대 졸업 • 스튜디오 세션 연주자</small></p>
+                    </div>
+                    <div class="teacher-card">
+                        <h3>박선생님</h3>
+                        <p>앙상블 지도 전문, 12년 경력<br>
+                        <small>연세대 음대 졸업 • 챔버 앙상블 리더</small></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="contact">
+            <div class="container">
+                <h2>문의하기</h2>
+                <div class="contact-info">
+                    <p>전화: 010-1234-5678</p>
+                    <p>주소: 서울시 강남구 테헤란로 123</p>
+                    <p>이메일: info@j-violin.com</p>
+                </div>
+                <form class="contact-form">
+                    <input type="text" placeholder="이름" required>
+                    <input type="email" placeholder="이메일" required>
+                    <textarea placeholder="문의 내용" required></textarea>
+                    <button type="submit">문의 전송</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 J-Violin 학원. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="components/navigation.js"></script>
+    <script src="js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Navigation.init();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 대시보드 - J-Violin</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+</head>
+<body class="admin-dashboard">
+    <header class="admin-header">
+        <nav class="admin-nav">
+            <h1>🎼 J-Violin 관리자</h1>
+            <ul class="admin-nav-menu">
+                <li><a href="./dashboard.html" class="active">대시보드</a></li>
+                <li><a href="./users.html">사용자 관리</a></li>
+                <li><a href="./schedules.html">시간표 관리</a></li>
+                <li><a href="./posts.html">게시판 관리</a></li>
+                <li><a href="./media.html">갤러리 관리</a></li>
+                <li><a href="./reservations.html">예약 관리</a></li>
+            </ul>
+            <div class="admin-user-info">
+                <span id="adminUserName">관리자</span>
+                <button class="admin-btn admin-btn-secondary" onclick="logout()">로그아웃</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="admin-container">
+        <h1 class="admin-page-title">대시보드</h1>
+
+        <!-- 통계 카드 -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalStudents">0</div>
+                <div class="stat-label">총 학생 수</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalTeachers">0</div>
+                <div class="stat-label">총 강사 수</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalSchedules">0</div>
+                <div class="stat-label">활성 스케줄</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalPosts">0</div>
+                <div class="stat-label">발행된 게시글</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalMedia">0</div>
+                <div class="stat-label">갤러리 항목</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="confirmedReservations">0</div>
+                <div class="stat-label">확정된 예약</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingReservations">0</div>
+                <div class="stat-label">대기 중 예약</div>
+            </div>
+        </div>
+
+        <!-- 최근 가입한 사용자 -->
+        <div class="admin-table-container">
+            <h3 style="padding: 20px 20px 0; margin: 0; color: #333;">최근 가입한 사용자</h3>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>사용자명</th>
+                        <th>이름</th>
+                        <th>역할</th>
+                        <th>가입일</th>
+                    </tr>
+                </thead>
+                <tbody id="recentUsersTable">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #666;">로딩 중...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <br>
+
+        <!-- 최근 예약 -->
+        <div class="admin-table-container">
+            <h3 style="padding: 20px 20px 0; margin: 0; color: #333;">최근 예약</h3>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>학생</th>
+                        <th>수업</th>
+                        <th>예약일</th>
+                        <th>상태</th>
+                        <th>등록일</th>
+                    </tr>
+                </thead>
+                <tbody id="recentReservationsTable">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #666;">로딩 중...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAdminAuth();
+            loadDashboardData();
+        });
+
+        function checkAdminAuth() {
+            const token = localStorage.getItem('adminToken');
+            const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
+            
+            if (!token || user.role !== 'admin') {
+                window.location.href = './login.html';
+                return;
+            }
+            
+            document.getElementById('adminUserName').textContent = user.name || '관리자';
+        }
+
+        async function loadDashboardData() {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch('/api/admin/dashboard', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('데이터를 불러올 수 없습니다.');
+                }
+
+                const data = await response.json();
+                updateStats(data.stats);
+                updateRecentUsers(data.recentUsers);
+                updateRecentReservations(data.recentReservations);
+
+            } catch (error) {
+                console.error('대시보드 데이터 로딩 오류:', error);
+                showError('데이터를 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById('totalStudents').textContent = stats.totalStudents;
+            document.getElementById('totalTeachers').textContent = stats.totalTeachers;
+            document.getElementById('totalSchedules').textContent = stats.totalSchedules;
+            document.getElementById('totalPosts').textContent = stats.totalPosts;
+            document.getElementById('totalMedia').textContent = stats.totalMedia;
+            document.getElementById('confirmedReservations').textContent = stats.confirmedReservations;
+            document.getElementById('pendingReservations').textContent = stats.pendingReservations;
+        }
+
+        function updateRecentUsers(users) {
+            const tbody = document.getElementById('recentUsersTable');
+            
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666;">최근 가입한 사용자가 없습니다.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.username}</td>
+                    <td>${user.name}</td>
+                    <td><span class="status-badge status-${user.role}">${getRoleText(user.role)}</span></td>
+                    <td>${formatDate(user.createdAt)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateRecentReservations(reservations) {
+            const tbody = document.getElementById('recentReservationsTable');
+            
+            if (reservations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #666;">최근 예약이 없습니다.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = reservations.map(reservation => `
+                <tr>
+                    <td>${reservation.user.name}</td>
+                    <td>${reservation.schedule.courseName}<br><small>${reservation.schedule.timeSlot}</small></td>
+                    <td>${formatDate(reservation.reservationDate)}</td>
+                    <td><span class="status-badge status-${reservation.status}">${getStatusText(reservation.status)}</span></td>
+                    <td>${formatDate(reservation.createdAt)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function getRoleText(role) {
+            const roleMap = {
+                'student': '학생',
+                'teacher': '강사',
+                'admin': '관리자'
+            };
+            return roleMap[role] || role;
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '대기',
+                'confirmed': '확정',
+                'cancelled': '취소',
+                'completed': '완료'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function logout() {
+            if (confirm('로그아웃하시겠습니까?')) {
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('adminUser');
+                window.location.href = './login.html';
+            }
+        }
+
+        function showError(message) {
+            alert(message); // 실제 프로젝트에서는 더 나은 알림 시스템 사용
+        }
+    </script>
+</body>
+</html>

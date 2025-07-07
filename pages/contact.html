@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문의 - J-Violin 학원</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/styles-extended.css">
+    <link rel="stylesheet" href="../css/musical-theme.css">
+</head>
+<body>
+    <header></header>
+
+    <main class="page-content">
+        <section class="page-hero">
+            <div class="container">
+                <h1>📞 문의</h1>
+                <p>♪ J-Violin 학원에 궁금한 점이 있으시면 언제든지 문의해주세요 ♪</p>
+            </div>
+        </section>
+
+        <section class="contact-content">
+            <div class="container">
+                <div class="contact-grid">
+                    <div class="contact-info-section">
+                        <h2>🏢 학원 정보</h2>
+                        <div class="info-cards">
+                            <div class="info-card">
+                                <div class="info-icon">📍</div>
+                                <div class="info-details">
+                                    <h3>주소</h3>
+                                    <p>서울특별시 강남구 테헤란로 123<br>J-Violin 빌딩 2층</p>
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-icon">📞</div>
+                                <div class="info-details">
+                                    <h3>전화번호</h3>
+                                    <p>02-1234-5678</p>
+                                    <p>휴대폰: 010-1234-5678</p>
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-icon">⏰</div>
+                                <div class="info-details">
+                                    <h3>운영시간</h3>
+                                    <p>평일: 09:00 - 21:00<br>토요일: 09:00 - 18:00<br>일요일: 휴무</p>
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-icon">✉️</div>
+                                <div class="info-details">
+                                    <h3>이메일</h3>
+                                    <p>info@j-violin.com</p>
+                                    <p>admin@j-violin.com</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="map-section">
+                            <h3>오시는 길</h3>
+                            <div class="map-placeholder">
+                                <p>지도 영역</p>
+                                <small>실제 서비스에서는 네이버 지도나 구글 지도 API를 연동하여 사용합니다.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="contact-form-section">
+                        <h2>문의하기</h2>
+                        <form id="contact-form" class="contact-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="name">이름 *</label>
+                                    <input type="text" id="name" name="name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone">연락처 *</label>
+                                    <input type="tel" id="phone" name="phone" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="email">이메일</label>
+                                <input type="email" id="email" name="email">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="inquiry-type">문의 유형 *</label>
+                                <select id="inquiry-type" name="inquiry-type" required>
+                                    <option value="">선택하세요</option>
+                                    <option value="enrollment">수강 신청</option>
+                                    <option value="schedule">시간표 문의</option>
+                                    <option value="fee">수강료 문의</option>
+                                    <option value="facility">시설 문의</option>
+                                    <option value="other">기타</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="student-age">학생 연령</label>
+                                <select id="student-age" name="student-age">
+                                    <option value="">선택하세요</option>
+                                    <option value="preschool">유치원생 (5-7세)</option>
+                                    <option value="elementary">초등학생 (8-13세)</option>
+                                    <option value="middle">중학생 (14-16세)</option>
+                                    <option value="high">고등학생 (17-19세)</option>
+                                    <option value="adult">성인 (20세 이상)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="experience">바이올린 경험</label>
+                                <select id="experience" name="experience">
+                                    <option value="">선택하세요</option>
+                                    <option value="none">처음 시작</option>
+                                    <option value="beginner">1년 미만</option>
+                                    <option value="intermediate">1-3년</option>
+                                    <option value="advanced">3년 이상</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="message">문의 내용 *</label>
+                                <textarea id="message" name="message" rows="5" required placeholder="궁금한 점을 자세히 적어주세요."></textarea>
+                            </div>
+                            
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="privacy-agree" name="privacy-agree" required>
+                                    개인정보 수집 및 이용에 동의합니다. *
+                                </label>
+                                <a href="#" class="privacy-link">개인정보 처리방침 보기</a>
+                            </div>
+                            
+                            <button type="submit" class="submit-btn">문의 전송</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h2>자주 묻는 질문</h2>
+                    <div class="faq-list">
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h3>바이올린을 처음 배우는데 어떤 과정을 선택해야 하나요?</h3>
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                <p>바이올린을 처음 시작하시는 분들은 초급 과정부터 시작하시는 것을 권장합니다. 기본 자세와 보잉 연습부터 체계적으로 배우실 수 있습니다.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h3>바이올린을 구매해야 하나요?</h3>
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                <p>초급 과정 학생들을 위한 바이올린 대여 서비스를 제공하고 있습니다. 레슨을 받으면서 악기에 대해 충분히 알아보신 후 구매하시는 것을 추천합니다.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h3>개인 레슨과 그룹 레슨의 차이점은 무엇인가요?</h3>
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                <p>개인 레슨은 1:1 맞춤 지도로 빠른 실력 향상이 가능하고, 그룹 레슨은 합주 경험을 통해 음악적 소통과 협동심을 기를 수 있습니다.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h3>발표회는 언제 있나요?</h3>
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                <p>정기 발표회는 연 2회 (6월, 12월)에 개최됩니다. 모든 학생들이 그동안 배운 곡을 발표할 수 있는 기회를 제공합니다.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h3>주차 시설이 있나요?</h3>
+                                <span class="faq-toggle">+</span>
+                            </div>
+                            <div class="faq-answer">
+                                <p>학원 건물 지하에 주차장이 있으며, 학원 이용 시 2시간 무료 주차가 가능합니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 J-Violin 학원. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="../components/navigation.js"></script>
+    <script src="../components/contact.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Navigation.init();
+            Contact.init();
+        });
+    </script>
+</body>
+</html>

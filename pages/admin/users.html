@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사용자 관리 - J-Violin 관리자</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+</head>
+<body class="admin-dashboard">
+    <header class="admin-header">
+        <nav class="admin-nav">
+            <h1>🎼 J-Violin 관리자</h1>
+            <ul class="admin-nav-menu">
+                <li><a href="./dashboard.html">대시보드</a></li>
+                <li><a href="./users.html" class="active">사용자 관리</a></li>
+                <li><a href="./schedules.html">시간표 관리</a></li>
+                <li><a href="./posts.html">게시판 관리</a></li>
+                <li><a href="./media.html">갤러리 관리</a></li>
+                <li><a href="./reservations.html">예약 관리</a></li>
+            </ul>
+            <div class="admin-user-info">
+                <span id="adminUserName">관리자</span>
+                <button class="admin-btn admin-btn-secondary" onclick="logout()">로그아웃</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="admin-container">
+        <div class="admin-page-header">
+            <h1 class="admin-page-title">사용자 관리</h1>
+            <button class="admin-btn admin-btn-primary" onclick="showCreateUserModal()">새 사용자 추가</button>
+        </div>
+
+        <!-- 필터 -->
+        <div class="admin-filters">
+            <div class="filter-group">
+                <label for="roleFilter">역할:</label>
+                <select id="roleFilter" onchange="filterUsers()">
+                    <option value="">전체</option>
+                    <option value="student">학생</option>
+                    <option value="teacher">강사</option>
+                    <option value="admin">관리자</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="statusFilter">상태:</label>
+                <select id="statusFilter" onchange="filterUsers()">
+                    <option value="">전체</option>
+                    <option value="true">활성</option>
+                    <option value="false">비활성</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="searchInput">검색:</label>
+                <input type="text" id="searchInput" placeholder="이름 또는 사용자명 검색" onkeyup="filterUsers()">
+            </div>
+        </div>
+
+        <!-- 사용자 테이블 -->
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>사용자명</th>
+                        <th>이름</th>
+                        <th>이메일</th>
+                        <th>전화번호</th>
+                        <th>역할</th>
+                        <th>상태</th>
+                        <th>가입일</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTable">
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: #666;">로딩 중...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- 사용자 생성/편집 모달 -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">새 사용자 추가</h2>
+                <span class="close" onclick="closeUserModal()">&times;</span>
+            </div>
+            <form id="userForm" onsubmit="saveUser(event)">
+                <div class="form-group">
+                    <label for="modalUsername">사용자명:</label>
+                    <input type="text" id="modalUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalName">이름:</label>
+                    <input type="text" id="modalName" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalEmail">이메일:</label>
+                    <input type="email" id="modalEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalPhone">전화번호:</label>
+                    <input type="tel" id="modalPhone">
+                </div>
+                <div class="form-group">
+                    <label for="modalRole">역할:</label>
+                    <select id="modalRole" required>
+                        <option value="student">학생</option>
+                        <option value="teacher">강사</option>
+                        <option value="admin">관리자</option>
+                    </select>
+                </div>
+                <div class="form-group" id="passwordGroup">
+                    <label for="modalPassword">비밀번호:</label>
+                    <input type="password" id="modalPassword">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="modalIsActive" checked>
+                        활성 상태
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="admin-btn admin-btn-secondary" onclick="closeUserModal()">취소</button>
+                    <button type="submit" class="admin-btn admin-btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let users = [];
+        let filteredUsers = [];
+        let editingUserId = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAdminAuth();
+            loadUsers();
+        });
+
+        function checkAdminAuth() {
+            const token = localStorage.getItem('adminToken');
+            const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
+            
+            if (!token || user.role !== 'admin') {
+                window.location.href = './login.html';
+                return;
+            }
+            
+            document.getElementById('adminUserName').textContent = user.name || '관리자';
+        }
+
+        async function loadUsers() {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch('/api/admin/users', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('사용자 목록을 불러올 수 없습니다.');
+                }
+
+                users = await response.json();
+                filteredUsers = [...users];
+                renderUsers();
+
+            } catch (error) {
+                console.error('사용자 로딩 오류:', error);
+                showError('사용자 목록을 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('usersTable');
+            
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #666;">사용자가 없습니다.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredUsers.map(user => `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${user.username}</td>
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td><span class="status-badge status-${user.role}">${getRoleText(user.role)}</span></td>
+                    <td><span class="status-badge ${user.isActive ? 'status-confirmed' : 'status-cancelled'}">${user.isActive ? '활성' : '비활성'}</span></td>
+                    <td>${formatDate(user.createdAt)}</td>
+                    <td>
+                        <button class="admin-btn admin-btn-small" onclick="editUser(${user.id})">편집</button>
+                        <button class="admin-btn admin-btn-small admin-btn-danger" onclick="deleteUser(${user.id})">삭제</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterUsers() {
+            const roleFilter = document.getElementById('roleFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredUsers = users.filter(user => {
+                const matchesRole = !roleFilter || user.role === roleFilter;
+                const matchesStatus = !statusFilter || user.isActive.toString() === statusFilter;
+                const matchesSearch = !searchInput || 
+                    user.name.toLowerCase().includes(searchInput) || 
+                    user.username.toLowerCase().includes(searchInput);
+
+                return matchesRole && matchesStatus && matchesSearch;
+            });
+
+            renderUsers();
+        }
+
+        function showCreateUserModal() {
+            editingUserId = null;
+            document.getElementById('modalTitle').textContent = '새 사용자 추가';
+            document.getElementById('userForm').reset();
+            document.getElementById('modalIsActive').checked = true;
+            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('modalPassword').required = true;
+            document.getElementById('userModal').style.display = 'block';
+        }
+
+        function editUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+
+            editingUserId = userId;
+            document.getElementById('modalTitle').textContent = '사용자 편집';
+            document.getElementById('modalUsername').value = user.username;
+            document.getElementById('modalName').value = user.name;
+            document.getElementById('modalEmail').value = user.email;
+            document.getElementById('modalPhone').value = user.phone || '';
+            document.getElementById('modalRole').value = user.role;
+            document.getElementById('modalIsActive').checked = user.isActive;
+            document.getElementById('passwordGroup').style.display = 'none';
+            document.getElementById('modalPassword').required = false;
+            document.getElementById('userModal').style.display = 'block';
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').style.display = 'none';
+            editingUserId = null;
+        }
+
+        async function saveUser(event) {
+            event.preventDefault();
+            
+            const formData = {
+                username: document.getElementById('modalUsername').value,
+                name: document.getElementById('modalName').value,
+                email: document.getElementById('modalEmail').value,
+                phone: document.getElementById('modalPhone').value,
+                role: document.getElementById('modalRole').value,
+                isActive: document.getElementById('modalIsActive').checked
+            };
+
+            if (!editingUserId) {
+                formData.password = document.getElementById('modalPassword').value;
+            }
+
+            try {
+                const token = localStorage.getItem('adminToken');
+                const url = editingUserId ? `/api/admin/users/${editingUserId}` : '/api/admin/users';
+                const method = editingUserId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '사용자 저장에 실패했습니다.');
+                }
+
+                closeUserModal();
+                loadUsers();
+                showSuccess(editingUserId ? '사용자가 수정되었습니다.' : '사용자가 생성되었습니다.');
+
+            } catch (error) {
+                console.error('사용자 저장 오류:', error);
+                showError(error.message);
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('정말로 이 사용자를 삭제하시겠습니까?')) return;
+
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('사용자 삭제에 실패했습니다.');
+                }
+
+                loadUsers();
+                showSuccess('사용자가 삭제되었습니다.');
+
+            } catch (error) {
+                console.error('사용자 삭제 오류:', error);
+                showError('사용자 삭제 중 오류가 발생했습니다.');
+            }
+        }
+
+        function getRoleText(role) {
+            const roleMap = {
+                'student': '학생',
+                'teacher': '강사',
+                'admin': '관리자'
+            };
+            return roleMap[role] || role;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ko-KR');
+        }
+
+        function logout() {
+            if (confirm('로그아웃하시겠습니까?')) {
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('adminUser');
+                window.location.href = './login.html';
+            }
+        }
+
+        function showError(message) {
+            alert('오류: ' + message);
+        }
+
+        function showSuccess(message) {
+            alert(message);
+        }
+
+        // 모달 외부 클릭시 닫기
+        window.onclick = function(event) {
+            const modal = document.getElementById('userModal');
+            if (event.target === modal) {
+                closeUserModal();
+            }
+        }
+    </script>
+</body>
+</html>

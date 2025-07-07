@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 로그인 - J-Violin</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+</head>
+<body class="admin-body">
+    <div class="admin-login-container">
+        <div class="admin-login-form">
+            <div class="admin-logo">
+                <h1>🎼 J-Violin</h1>
+                <p>관리자 시스템</p>
+            </div>
+            
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="username">사용자명</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">비밀번호</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="admin-btn admin-btn-primary">
+                    로그인
+                </button>
+            </form>
+            
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            
+            <div class="admin-links">
+                <a href="../../index.html">← 메인 사이트로 돌아가기</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 이미 로그인된 경우 대시보드로 리다이렉트
+            const token = localStorage.getItem('adminToken');
+            if (token) {
+                verifyToken(token);
+            }
+
+            // 로그인 폼 처리
+            document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const loginData = {
+                    username: formData.get('username'),
+                    password: formData.get('password')
+                };
+
+                try {
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(loginData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        if (result.user.role === 'admin') {
+                            localStorage.setItem('adminToken', result.token);
+                            localStorage.setItem('adminUser', JSON.stringify(result.user));
+                            window.location.href = './dashboard.html';
+                        } else {
+                            showError('관리자 권한이 필요합니다.');
+                        }
+                    } else {
+                        showError(result.message || '로그인에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('로그인 오류:', error);
+                    showError('서버 연결에 실패했습니다.');
+                }
+            });
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        async function verifyToken(token) {
+            try {
+                const response = await fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.user.role === 'admin') {
+                        window.location.href = './dashboard.html';
+                    }
+                }
+            } catch (error) {
+                console.error('토큰 검증 오류:', error);
+            }
+        }
+    </script>
+</body>
+</html>

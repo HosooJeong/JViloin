@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시판 관리 - J-Violin 관리자</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+</head>
+<body class="admin-dashboard">
+    <header class="admin-header">
+        <nav class="admin-nav">
+            <h1>🎼 J-Violin 관리자</h1>
+            <ul class="admin-nav-menu">
+                <li><a href="./dashboard.html">대시보드</a></li>
+                <li><a href="./users.html">사용자 관리</a></li>
+                <li><a href="./schedules.html">시간표 관리</a></li>
+                <li><a href="./posts.html" class="active">게시판 관리</a></li>
+                <li><a href="./media.html">갤러리 관리</a></li>
+                <li><a href="./reservations.html">예약 관리</a></li>
+            </ul>
+            <div class="admin-user-info">
+                <span id="adminUserName">관리자</span>
+                <button class="admin-btn admin-btn-secondary" onclick="logout()">로그아웃</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="admin-container">
+        <div class="admin-page-header">
+            <h1 class="admin-page-title">게시판 관리</h1>
+            <button class="admin-btn admin-btn-primary" onclick="showCreatePostModal()">새 게시글 작성</button>
+        </div>
+
+        <!-- 필터 -->
+        <div class="admin-filters">
+            <div class="filter-group">
+                <label for="categoryFilter">카테고리:</label>
+                <select id="categoryFilter" onchange="filterPosts()">
+                    <option value="">전체</option>
+                    <option value="notice">공지사항</option>
+                    <option value="news">소식</option>
+                    <option value="event">이벤트</option>
+                    <option value="general">일반</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="searchInput">검색:</label>
+                <input type="text" id="searchInput" placeholder="제목 또는 내용 검색" onkeyup="filterPosts()">
+            </div>
+        </div>
+
+        <!-- 게시글 테이블 -->
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>제목</th>
+                        <th>카테고리</th>
+                        <th>작성자</th>
+                        <th>조회수</th>
+                        <th>작성일</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody id="postsTable">
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #666;">로딩 중...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- 게시글 생성/편집 모달 -->
+    <div id="postModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="modalTitle">새 게시글 작성</h2>
+                <span class="close" onclick="closePostModal()">&times;</span>
+            </div>
+            <form id="postForm" onsubmit="savePost(event)">
+                <div class="form-group">
+                    <label for="modalTitle">제목:</label>
+                    <input type="text" id="modalPostTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalCategory">카테고리:</label>
+                    <select id="modalCategory" required>
+                        <option value="notice">공지사항</option>
+                        <option value="news">소식</option>
+                        <option value="event">이벤트</option>
+                        <option value="general">일반</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="modalContent">내용:</label>
+                    <textarea id="modalContent" rows="10" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="admin-btn admin-btn-secondary" onclick="closePostModal()">취소</button>
+                    <button type="submit" class="admin-btn admin-btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let posts = [];
+        let filteredPosts = [];
+        let editingPostId = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAdminAuth();
+            loadPosts();
+        });
+
+        function checkAdminAuth() {
+            const token = localStorage.getItem('adminToken');
+            const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
+            
+            if (!token || user.role !== 'admin') {
+                window.location.href = './login.html';
+                return;
+            }
+            
+            document.getElementById('adminUserName').textContent = user.name || '관리자';
+        }
+
+        async function loadPosts() {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch('/api/admin/posts', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('게시글 목록을 불러올 수 없습니다.');
+                }
+
+                posts = await response.json();
+                filteredPosts = [...posts];
+                renderPosts();
+
+            } catch (error) {
+                console.error('게시글 로딩 오류:', error);
+                showError('게시글 목록을 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        function renderPosts() {
+            const tbody = document.getElementById('postsTable');
+            
+            if (filteredPosts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">게시글이 없습니다.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredPosts.map(post => `
+                <tr>
+                    <td>${post.id}</td>
+                    <td><a href="javascript:void(0)" onclick="viewPost(${post.id})" style="color: #007bff; text-decoration: none;">${post.title}</a></td>
+                    <td><span class="status-badge status-${post.category}">${getCategoryText(post.category)}</span></td>
+                    <td>${post.author ? post.author.name : '알 수 없음'}</td>
+                    <td>${post.views || 0}</td>
+                    <td>${formatDate(post.createdAt)}</td>
+                    <td>
+                        <button class="admin-btn admin-btn-small" onclick="editPost(${post.id})">편집</button>
+                        <button class="admin-btn admin-btn-small admin-btn-danger" onclick="deletePost(${post.id})">삭제</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterPosts() {
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredPosts = posts.filter(post => {
+                const matchesCategory = !categoryFilter || post.category === categoryFilter;
+                const matchesSearch = !searchInput || 
+                    post.title.toLowerCase().includes(searchInput) || 
+                    post.content.toLowerCase().includes(searchInput);
+
+                return matchesCategory && matchesSearch;
+            });
+
+            renderPosts();
+        }
+
+        function showCreatePostModal() {
+            editingPostId = null;
+            document.getElementById('modalTitle').textContent = '새 게시글 작성';
+            document.getElementById('postForm').reset();
+            document.getElementById('postModal').style.display = 'block';
+        }
+
+        function editPost(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+
+            editingPostId = postId;
+            document.getElementById('modalTitle').textContent = '게시글 편집';
+            document.getElementById('modalPostTitle').value = post.title;
+            document.getElementById('modalCategory').value = post.category;
+            document.getElementById('modalContent').value = post.content;
+            document.getElementById('postModal').style.display = 'block';
+        }
+
+        function viewPost(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+
+            alert(`제목: ${post.title}\n\n내용:\n${post.content}`);
+        }
+
+        function closePostModal() {
+            document.getElementById('postModal').style.display = 'none';
+            editingPostId = null;
+        }
+
+        async function savePost(event) {
+            event.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('modalPostTitle').value,
+                category: document.getElementById('modalCategory').value,
+                content: document.getElementById('modalContent').value
+            };
+
+            try {
+                const token = localStorage.getItem('adminToken');
+                const url = editingPostId ? `/api/admin/posts/${editingPostId}` : '/api/admin/posts';
+                const method = editingPostId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '게시글 저장에 실패했습니다.');
+                }
+
+                closePostModal();
+                loadPosts();
+                showSuccess(editingPostId ? '게시글이 수정되었습니다.' : '게시글이 작성되었습니다.');
+
+            } catch (error) {
+                console.error('게시글 저장 오류:', error);
+                showError(error.message);
+            }
+        }
+
+        async function deletePost(postId) {
+            if (!confirm('정말로 이 게시글을 삭제하시겠습니까?')) return;
+
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch(`/api/admin/posts/${postId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('게시글 삭제에 실패했습니다.');
+                }
+
+                loadPosts();
+                showSuccess('게시글이 삭제되었습니다.');
+
+            } catch (error) {
+                console.error('게시글 삭제 오류:', error);
+                showError('게시글 삭제 중 오류가 발생했습니다.');
+            }
+        }
+
+        function getCategoryText(category) {
+            const categoryMap = {
+                'notice': '공지사항',
+                'news': '소식',
+                'event': '이벤트',
+                'general': '일반'
+            };
+            return categoryMap[category] || category;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ko-KR');
+        }
+
+        function logout() {
+            if (confirm('로그아웃하시겠습니까?')) {
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('adminUser');
+                window.location.href = './login.html';
+            }
+        }
+
+        function showError(message) {
+            alert('오류: ' + message);
+        }
+
+        function showSuccess(message) {
+            alert(message);
+        }
+
+        // 모달 외부 클릭시 닫기
+        window.onclick = function(event) {
+            const modal = document.getElementById('postModal');
+            if (event.target === modal) {
+                closePostModal();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>예약 관리 - J-Violin 관리자</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+</head>
+<body class="admin-dashboard">
+    <header class="admin-header">
+        <nav class="admin-nav">
+            <h1>🎼 J-Violin 관리자</h1>
+            <ul class="admin-nav-menu">
+                <li><a href="./dashboard.html">대시보드</a></li>
+                <li><a href="./users.html">사용자 관리</a></li>
+                <li><a href="./schedules.html">시간표 관리</a></li>
+                <li><a href="./posts.html">게시판 관리</a></li>
+                <li><a href="./media.html">갤러리 관리</a></li>
+                <li><a href="./reservations.html" class="active">예약 관리</a></li>
+            </ul>
+            <div class="admin-user-info">
+                <span id="adminUserName">관리자</span>
+                <button class="admin-btn admin-btn-secondary" onclick="logout()">로그아웃</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="admin-container">
+        <div class="admin-page-header">
+            <h1 class="admin-page-title">예약 관리</h1>
+        </div>
+
+        <!-- 필터 -->
+        <div class="admin-filters">
+            <div class="filter-group">
+                <label for="statusFilter">상태:</label>
+                <select id="statusFilter" onchange="filterReservations()">
+                    <option value="">전체</option>
+                    <option value="pending">대기</option>
+                    <option value="confirmed">확정</option>
+                    <option value="cancelled">취소</option>
+                    <option value="completed">완료</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="dateFilter">예약일:</label>
+                <input type="date" id="dateFilter" onchange="filterReservations()">
+            </div>
+            <div class="filter-group">
+                <label for="searchInput">검색:</label>
+                <input type="text" id="searchInput" placeholder="학생명 또는 수업명 검색" onkeyup="filterReservations()">
+            </div>
+        </div>
+
+        <!-- 예약 테이블 -->
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>학생</th>
+                        <th>수업</th>
+                        <th>강사</th>
+                        <th>예약일</th>
+                        <th>시간</th>
+                        <th>상태</th>
+                        <th>등록일</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody id="reservationsTable">
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: #666;">로딩 중...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        let reservations = [];
+        let filteredReservations = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAdminAuth();
+            loadReservations();
+        });
+
+        function checkAdminAuth() {
+            const token = localStorage.getItem('adminToken');
+            const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
+            
+            if (!token || user.role !== 'admin') {
+                window.location.href = './login.html';
+                return;
+            }
+            
+            document.getElementById('adminUserName').textContent = user.name || '관리자';
+        }
+
+        async function loadReservations() {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch('/api/admin/reservations', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('예약 목록을 불러올 수 없습니다.');
+                }
+
+                reservations = await response.json();
+                filteredReservations = [...reservations];
+                renderReservations();
+
+            } catch (error) {
+                console.error('예약 로딩 오류:', error);
+                showError('예약 목록을 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        function renderReservations() {
+            const tbody = document.getElementById('reservationsTable');
+            
+            if (filteredReservations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #666;">예약이 없습니다.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredReservations.map(reservation => `
+                <tr>
+                    <td>${reservation.id}</td>
+                    <td>${reservation.user ? reservation.user.name : '알 수 없음'}</td>
+                    <td>${reservation.schedule ? reservation.schedule.courseName : '알 수 없음'}</td>
+                    <td>${reservation.schedule && reservation.schedule.teacher ? reservation.schedule.teacher.name : '미배정'}</td>
+                    <td>${formatDate(reservation.reservationDate)}</td>
+                    <td>${reservation.schedule ? reservation.schedule.timeSlot : '-'}</td>
+                    <td><span class="status-badge status-${reservation.status}">${getStatusText(reservation.status)}</span></td>
+                    <td>${formatDate(reservation.createdAt)}</td>
+                    <td>
+                        ${reservation.status === 'pending' ? 
+                            `<button class="admin-btn admin-btn-small admin-btn-success" onclick="updateReservationStatus(${reservation.id}, 'confirmed')">승인</button>
+                             <button class="admin-btn admin-btn-small admin-btn-danger" onclick="updateReservationStatus(${reservation.id}, 'cancelled')">거절</button>` :
+                            reservation.status === 'confirmed' ?
+                            `<button class="admin-btn admin-btn-small" onclick="updateReservationStatus(${reservation.id}, 'completed')">완료</button>
+                             <button class="admin-btn admin-btn-small admin-btn-danger" onclick="updateReservationStatus(${reservation.id}, 'cancelled')">취소</button>` :
+                            '<span style="color: #666;">-</span>'
+                        }
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterReservations() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredReservations = reservations.filter(reservation => {
+                const matchesStatus = !statusFilter || reservation.status === statusFilter;
+                const matchesDate = !dateFilter || reservation.reservationDate.startsWith(dateFilter);
+                const matchesSearch = !searchInput || 
+                    (reservation.user && reservation.user.name.toLowerCase().includes(searchInput)) || 
+                    (reservation.schedule && reservation.schedule.courseName.toLowerCase().includes(searchInput));
+
+                return matchesStatus && matchesDate && matchesSearch;
+            });
+
+            renderReservations();
+        }
+
+        async function updateReservationStatus(reservationId, newStatus) {
+            const statusText = getStatusText(newStatus);
+            if (!confirm(`이 예약을 "${statusText}" 상태로 변경하시겠습니까?`)) return;
+
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch(`/api/admin/reservations/${reservationId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '예약 상태 변경에 실패했습니다.');
+                }
+
+                loadReservations();
+                showSuccess(`예약이 "${statusText}" 상태로 변경되었습니다.`);
+
+            } catch (error) {
+                console.error('예약 상태 변경 오류:', error);
+                showError(error.message);
+            }
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '대기',
+                'confirmed': '확정',
+                'cancelled': '취소',
+                'completed': '완료'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ko-KR');
+        }
+
+        function logout() {
+            if (confirm('로그아웃하시겠습니까?')) {
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('adminUser');
+                window.location.href = './login.html';
+            }
+        }
+
+        function showError(message) {
+            alert('오류: ' + message);
+        }
+
+        function showSuccess(message) {
+            alert(message);
+        }
+    </script>
+
+    <style>
+        .admin-btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+
+        .admin-btn-success:hover {
+            background-color: #218838;
+        }
+    </style>
+</body>
+</html>

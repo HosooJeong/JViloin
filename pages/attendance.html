@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>출석체크 - J-Violin 학원</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/styles-extended.css">
+    <link rel="stylesheet" href="../css/musical-theme.css">
+</head>
+<body>
+    <header></header>
+
+    <main class="page-content">
+        <section class="page-hero">
+            <div class="container">
+                <h1>📋 출석체크</h1>
+                <p>🎵 학생들의 출석을 관리합니다 🎵</p>
+            </div>
+        </section>
+
+        <section class="attendance-content">
+            <div class="container">
+                <div class="attendance-controls">
+                    <div class="date-selector">
+                        <label for="attendance-date">날짜 선택:</label>
+                        <input type="date" id="attendance-date" value="">
+                    </div>
+                    
+                    <div class="class-selector">
+                        <label for="class-select">반 선택:</label>
+                        <select id="class-select">
+                            <option value="">반을 선택하세요</option>
+                            <option value="beginner-a">초급 A반</option>
+                            <option value="beginner-b">초급 B반</option>
+                            <option value="beginner-c">초급 C반</option>
+                            <option value="intermediate-a">중급 A반</option>
+                            <option value="intermediate-b">중급 B반</option>
+                            <option value="intermediate-c">중급 C반</option>
+                            <option value="advanced-a">고급 A반</option>
+                            <option value="advanced-b">고급 B반</option>
+                        </select>
+                    </div>
+                    
+                    <button id="load-attendance" class="btn-primary">출석부 불러오기</button>
+                </div>
+
+                <div class="attendance-table-container" id="attendance-table-container" style="display: none;">
+                    <div class="attendance-header">
+                        <h2 id="selected-class-name">선택된 반</h2>
+                        <span id="selected-date">선택된 날짜</span>
+                    </div>
+                    
+                    <table class="attendance-table">
+                        <thead>
+                            <tr>
+                                <th>번호</th>
+                                <th>이름</th>
+                                <th>출석</th>
+                                <th>지각</th>
+                                <th>결석</th>
+                                <th>비고</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-tbody">
+                        </tbody>
+                    </table>
+                    
+                    <div class="attendance-actions">
+                        <button id="save-attendance" class="btn-primary">출석 저장</button>
+                        <button id="print-attendance" class="btn-secondary">출석표 인쇄</button>
+                    </div>
+                </div>
+
+                <div class="attendance-stats">
+                    <h2>출석 통계</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="total-students">0</div>
+                            <div class="stat-label">총 학생 수</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="present-students">0</div>
+                            <div class="stat-label">출석</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="late-students">0</div>
+                            <div class="stat-label">지각</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="absent-students">0</div>
+                            <div class="stat-label">결석</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="attendance-history">
+                    <h2>출석 기록</h2>
+                    <div class="history-filter">
+                        <label for="history-month">월별 조회:</label>
+                        <input type="month" id="history-month">
+                        <button id="load-history" class="btn-secondary">조회</button>
+                    </div>
+                    <div class="history-table-container">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>날짜</th>
+                                    <th>반</th>
+                                    <th>출석률</th>
+                                    <th>비고</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-tbody">
+                                <tr>
+                                    <td colspan="4" class="no-data">조회할 월을 선택하세요</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 J-Violin 학원. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="../components/navigation.js"></script>
+    <script src="../components/attendance.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Navigation.init();
+            Attendance.init();
+        });
+    </script>
+</body>
+</html>
